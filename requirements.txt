@@ -1,5 +1,3 @@
-cd "/Users/yashshakya787/Pro Hire"
-cat > requirements.txt << EOF
 fastapi==0.115.6
 uvicorn==0.42.0
 langgraph==1.0.10
