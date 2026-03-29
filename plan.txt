@@ -1,0 +1,107 @@
+✅ App Name      → ProHire
+✅ Theme         → Dark + Blue
+✅ Platform      → Flutter
+✅ Backend       → FastAPI + Python
+✅ AI Engine     → LangGraph + Groq LLaMA-3
+✅ Auth/DB       → Firebase
+✅ Hosting       → Render/Railway
+
+✅ Features (7)
+   1. Resume Analyzer (ATS Score)
+   2. Mock Interview Bot
+   3. Skill Gap Detector
+   4. Project Pitch Trainer
+   5. Smart Apply + Tracker
+   6. Internship Finder
+   7. User Type Selector
+      (Student/Fresher/Experienced)
+
+Pro Hire/
+├── agents/          🤖 AI brains
+├── routes/          🌐 API endpoints
+├── utils/           🔧 Helper functions
+├── main.py          🚀 Entry point
+└── .env             🔑 API keys
+
+Flutter App
+    ↓ (request bheja)
+routes/interview.py
+    ↓ (agent ko diya)
+agents/interview_agent.py
+    ↓ (LangGraph process kiya)
+routes/interview.py
+    ↓ (result wapas liya)
+Flutter App
+    ↓ (user ko dikhaya)
+Beautiful UI! 🎨
+
+
+
+ProHire Backend
+│
+├── 🤖 Resume Agent (LangGraph)
+│   ├── Parse PDF node
+│   ├── Extract skills node
+│   ├── ATS score node
+│   └── Feedback node
+│
+├── 🎤 Interview Agent (LangGraph)
+│   ├── Question generator node
+│   ├── Answer evaluator node
+│   ├── Follow-up node
+│   └── Final score node
+│
+├── 🎯 Skill Gap Agent (LangGraph)
+│   ├── JD parser node
+│   ├── Resume parser node
+│   ├── Gap analyzer node
+│   └── Resources suggester node
+│
+├── 🚀 Smart Apply Agent (LangGraph)
+│   ├── Job fetcher node
+│   ├── Match scorer node
+│   ├── Cover letter generator node
+│   └── Tracker updater node
+│
+└── 🎓 Internship Agent (LangGraph)
+    ├── Profile analyzer node
+    ├── Internship fetcher node
+    ├── Match scorer node
+    └── Apply handler node
+
+
+
+Phase 1 → Saare 5 agents banao (backend ready)
+           ✅ Resume Agent → Done!
+           ⬜ Interview Agent
+           ⬜ Skill Gap Agent
+           ⬜ Smart Apply Agent
+           ⬜ Internship Agent
+
+Phase 2 → Flutter UI banao
+           Beautiful screens
+           Connect to FastAPI
+
+Phase 3 → Play Store! 🚀
+
+
+
+Interview Agent :- 
+
+User ka Role + Resume
+        ↓
+[Node 1] analyze_profile
+        ↓
+[Node 2] generate_question
+        ↓
+[Node 3] evaluate_answer
+        ↓
+[Node 4] generate_followup
+        ↓
+[Node 5] final_score
+        ↓
+Score + Detailed Feedback
+
+
+
+
