@@ -9,6 +9,8 @@ class InterviewRequest(BaseModel):
     job_role: str
     interview_type: str
     user_answer: str
+    question_count: int = 5
+    difficulty: str = "Medium"
 
 @router.post("/mock-interview")
 async def mock_interview(request: InterviewRequest):
@@ -22,7 +24,9 @@ async def mock_interview(request: InterviewRequest):
         "evaluation": "",
         "followup_question": "",
         "final_score": 0,
-        "final_feedback": ""
+        "final_feedback": "",
+        "question_count": request.question_count,
+        "difficulty": request.difficulty,
     })
     
     return {

@@ -10,7 +10,7 @@ load_dotenv()
 class InterviewState(TypedDict):
     resume_text: str
     job_role: str
-    interview_type: str      # "HR" or "Technical"
+    interview_type: str
     questions: List[str]
     current_question: str
     user_answer: str
@@ -18,6 +18,8 @@ class InterviewState(TypedDict):
     followup_question: str
     final_score: int
     final_feedback: str
+    question_count: int
+    difficulty: str
 
 # ── LLM ───────────────────────────────────────────
 llm = ChatGroq(
@@ -27,21 +29,30 @@ llm = ChatGroq(
 
 # ── Node 1 — Analyze Profile ──────────────────────
 def analyze_profile(state: InterviewState) -> InterviewState:
+    count = state.get("question_count", 5)
+    difficulty = state.get("difficulty", "Medium")
+    
     prompt = f"""
     You are an expert interviewer.
     Candidate's Resume: {state["resume_text"]}
     Job Role: {state["job_role"]}
     Interview Type: {state["interview_type"]}
+    Difficulty Level: {difficulty}
     
-    Generate 5 relevant interview questions.
-    Return ONLY a Python list of 5 strings.
-    No explanation, no numbering.
+    Generate exactly {count} relevant interview questions based on the candidate's skills and job role.
+    Difficulty should be {difficulty}.
+    Return ONLY a Python list of exactly {count} strings.
+    No explanation, no numbering, no extra text.
     """
     response = llm.invoke(prompt)
     try:
         questions = eval(response.content.strip())
         if not isinstance(questions, list):
             questions = []
+        # Ensure exact count
+        while len(questions) < count:
+            questions.append("Tell me about a challenging project you worked on.")
+        questions = questions[:count]
     except:
         questions = [
             "Tell me about yourself.",
@@ -50,18 +61,18 @@ def analyze_profile(state: InterviewState) -> InterviewState:
             "Where do you see yourself in 5 years?",
             "Do you have any questions for us?"
         ]
+        while len(questions) < count:
+            questions.append("Describe a project you are proud of.")
+        questions = questions[:count]
     
     current = questions[0] if questions else "Tell me about yourself."
     return {**state, "questions": questions, "current_question": current}
 
 # ── Node 2 — Generate Question ────────────────────
 def generate_question(state: InterviewState) -> InterviewState:
-    # Already generated in analyze_profile
-    # This node formats the question nicely
     prompt = f"""
     Rephrase this interview question to sound natural and conversational:
     "{state["current_question"]}"
-    
     Return ONLY the rephrased question. Nothing else.
     """
     response = llm.invoke(prompt)
@@ -91,10 +102,8 @@ def evaluate_answer(state: InterviewState) -> InterviewState:
 def generate_followup(state: InterviewState) -> InterviewState:
     prompt = f"""
     Based on this interview answer, generate ONE smart follow-up question.
-    
     Original Question: {state["current_question"]}
     Candidate's Answer: {state["user_answer"]}
-    
     Return ONLY the follow-up question. Nothing else.
     """
     response = llm.invoke(prompt)
@@ -118,7 +127,6 @@ def calculate_final_score(state: InterviewState) -> InterviewState:
     """
     response = llm.invoke(prompt)
     
-    # Extract score
     try:
         lines = response.content.split("\n")
         score_line = [l for l in lines if "SCORE:" in l][0]
