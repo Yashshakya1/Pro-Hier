@@ -13,17 +13,20 @@ async def find_internships(request: Request):
     resume_text = ""
     field = ""
     user_type = ""
+    location = ""
     
     if "application/json" in content_type:
         data = await request.json()
         resume_text = data.get("resume_text", "")
         field = data.get("field", "")
         user_type = data.get("user_type", "")
+        location = data.get("location", "")
     elif "multipart/form-data" in content_type:
         form = await request.form()
         resume_text = form.get("resume_text", "")
         field = form.get("field", "")
         user_type = form.get("user_type", "")
+        location = form.get("location", "")
         
         file = form.get("file")
         if file and isinstance(file, UploadFile) and file.filename:
@@ -40,6 +43,7 @@ async def find_internships(request: Request):
             "resume_text": resume_text,
             "field": field,
             "user_type": user_type,
+            "location": location,
             "profile_summary": "",
             "internships": [],
             "best_match": {},

@@ -11,9 +11,11 @@ class InternshipState(TypedDict):
     resume_text: str
     field: str              # "AI/ML", "Web Dev", etc
     user_type: str          # "Student", "Fresher"
+    location: str           # User's target location
     profile_summary: str
     internships: List[dict]
     best_match: dict
+    application_tips: str
     application_tips: str
 
 # ── LLM ───────────────────────────────────────────
@@ -48,36 +50,53 @@ def analyze_profile(state: InternshipState) -> InternshipState:
     
     return {**state, "profile_summary": summary}
 
+# ── Helper ──────────────────────────────────────────
+from utils.internship_scraper import scrape_live_internships
+
 # ── Node 2 — Find Internships ─────────────────────
 def find_internships(state: InternshipState) -> InternshipState:
-    prompt = f"""
-    Suggest 5 real internship opportunities for this candidate.
+    # 1. SCRAPE REAL LISTINGS FIRST
+    location = state.get("location", "")
+    real_internships = scrape_live_internships(state["field"], location)
     
-    Field: {state["field"]}
-    Profile: {state["profile_summary"]}
-    User Type: {state["user_type"]}
-    
-    Return a Python list of 5 dictionaries:
-    [
-        {{
-            "company": "Company Name",
-            "role": "Internship Role",
-            "duration": "2-3 months",
-            "stipend": "₹10,000-15,000/month",
-            "platform": "Internshala/LinkedIn/Unstop",
-            "match_score": 85
-        }}
-    ]
-    Return ONLY the list. No explanation.
-    Focus on Indian companies and platforms.
-    """
+    if not real_internships:
+        # Fallback if scraper fails
+        prompt = f"""
+        Suggest 5 real internship opportunities for this candidate. Do NOT invent stipends (use 'Standard').
+        Give actual general search links for the 'link' property.
+        
+        Field: {state["field"]}
+        Location: {location}
+        Profile: {state["profile_summary"]}
+        
+        Return a Python list of 5 dictionaries:
+        [{{ "company": "...", "role": "...", "duration": "...", "stipend": "Standard", "platform": "LinkedIn", "match_score": 85, "link": "https://..." }}]
+        Return ONLY the list. No explanation.
+        """
+    else:
+        # USE REAL DATA TO PREVENT HALLUCINATIONS
+        prompt = f"""
+        Here is a list of REAL LIVE internship postings from the web right now:
+        {real_internships}
+        
+        Candidate Profile: {state["profile_summary"]}
+        
+        Filter and select the top 5 most relevant internships from the real list provided above for the candidate.
+        Calculate a 'match_score' (out of 100) for each.
+        You MUST keep the exact same 'company', 'role', 'stipend', 'duration', 'platform', and 'link' as the real postings. DO NOT MODIFY THE LINKS OR DETAILS.
+        
+        Return a Python list of dictionaries:
+        [{{ "company": "...", "role": "...", "duration": "...", "stipend": "...", "platform": "Internshala", "match_score": 85, "link": "https://..." }}]
+        Return ONLY the Python list. No explanation.
+        """
+        
     response = llm.invoke(prompt)
     try:
         internships = eval(response.content.strip())
         if not isinstance(internships, list):
-            internships = []
+            internships = real_internships[:5] if real_internships else []
     except:
-        internships = []
+        internships = real_internships[:5] if real_internships else []
     
     return {**state, "internships": internships}
 
