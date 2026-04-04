@@ -34,6 +34,15 @@ def is_relevant(title: str, field: str) -> bool:
         
     return len(f_words.intersection(t_words)) > 0
 
+def is_entry_level(title: str) -> bool:
+    t_lower = title.lower()
+    # Reject high-level seniority titles
+    senior_keywords = ["senior", "sr.", "sr ", "principal", "lead", "manager", "staff", "vp", "director", "head", "architect", "expert", "vp"]
+    for kw in senior_keywords:
+        if f"{kw} " in t_lower or f" {kw}" in t_lower or t_lower.startswith(kw):
+            return False
+    return True
+
 def scrape_internshala(field: str, location: str = "", seen: set = None) -> list:
     """Scrape Internshala ensuring < 3 days old."""
     if seen is None:
@@ -71,7 +80,7 @@ def scrape_internshala(field: str, location: str = "", seen: set = None) -> list
             title_elem = card.find('h2', class_='job-internship-name') or card.find('h3', class_='job-internship-name')
             title = title_elem.text.strip() if title_elem else "Internship Role"
             
-            if not is_relevant(title, field):
+            if not is_relevant(title, field) or not is_entry_level(title):
                 continue
                 
             if location.strip():
@@ -136,7 +145,7 @@ def scrape_linkedin_live(field: str, location: str = "", seen: set = None) -> li
             title_elem = li.find('h3', class_='base-search-card__title')
             title = title_elem.text.strip() if title_elem else "Internship Role"
             
-            if not is_relevant(title, field):
+            if not is_relevant(title, field) or not is_entry_level(title):
                 continue
                 
             if location.strip():
@@ -189,7 +198,11 @@ def scrape_remoteok(field: str, seen: set = None) -> list:
                 continue
             title = job.get('position', 'Internship Role')
             
-            if not is_relevant(title, field):
+            if not is_relevant(title, field) or not is_entry_level(title):
+                continue
+                
+            location_tag = job.get('location', '').lower()
+            if any(x in location_tag for x in ['usa', 'us only', 'uk only', 'europe', 'europe only', 'north america']):
                 continue
                 
             company = job.get('company', 'Company')
@@ -226,7 +239,19 @@ def scrape_jobicy(field: str, seen: set = None) -> list:
         for job in jobs:
             title = job.get('jobTitle', 'Internship Role')
             
-            if not is_relevant(title, field):
+            if not is_relevant(title, field) or not is_entry_level(title):
+                continue
+                
+            geo = job.get('jobGeo', 'Anywhere').lower()
+            allowed_geos = ["anywhere", "worldwide", "global", "india", "apac", "asia", "remote"]
+            
+            is_geo_ok = False
+            for g in allowed_geos:
+                if g in geo:
+                    is_geo_ok = True
+                    break
+                    
+            if not is_geo_ok:
                 continue
                 
             company = job.get('companyName', 'Company')
