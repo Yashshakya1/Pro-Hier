@@ -74,6 +74,12 @@ def scrape_internshala(field: str, location: str = "", seen: set = None) -> list
             if not is_relevant(title, field):
                 continue
                 
+            if location.strip():
+                loc_check = location.lower().strip()
+                card_text = card.text.lower()
+                if loc_check not in card_text and "work from home" not in card_text and "remote" not in card_text:
+                    continue
+                    
             company_elem = card.find('p', class_='company-name')
             company = company_elem.text.strip() if company_elem else "Company"
             
@@ -133,6 +139,12 @@ def scrape_linkedin_live(field: str, location: str = "", seen: set = None) -> li
             if not is_relevant(title, field):
                 continue
                 
+            if location.strip():
+                loc_check = location.lower().strip()
+                card_text = li.text.lower()
+                if loc_check not in card_text and "remote" not in card_text and "work from home" not in card_text:
+                    continue
+                    
             company_elem = li.find('h4', class_='base-search-card__subtitle')
             company = company_elem.text.strip() if company_elem else "Company"
             
