@@ -17,6 +17,10 @@ def is_relevant(title: str, field: str) -> bool:
         "devops": ["devops", "cloud", "aws", "azure", "docker", "kubernetes", "sre", "platform"],
         "cybersecurity": ["security", "cyber", "infosec", "penetration", "hacker"],
         "data science": ["data", "machine learning", "ai", "ml", "analytics", "scientist", "analyst"],
+        "ui/ux design": ["ui", "ux", "design", "figma", "graphic", "product design", "designer"],
+        "marketing": ["marketing", "seo", "social media", "digital", "branding", "b2b", "content", "writer"],
+        "hr & sales": ["hr", "human resources", "recruiter", "talent", "hiring", "sales", "business development", "bde", "revenue", "account"],
+        "finance": ["finance", "accounting", "audit", "tax", "banking", "financial", "economics"]
     }
     
     for key, values in aliases.items():
