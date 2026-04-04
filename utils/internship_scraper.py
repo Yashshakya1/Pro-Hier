@@ -293,4 +293,9 @@ def scrape_live_internships(field: str, location: str = "") -> list:
         if i < len(remoteok): combined.append(remoteok[i])
         if i < len(jobicy): combined.append(jobicy[i])
         
-    return combined[:150]
+    result = combined[:150]
+    if len(result) == 0 and location.strip():
+        # Fallback to nationwide search if location is too restrictive
+        return scrape_live_internships(field, "")
+    
+    return result
