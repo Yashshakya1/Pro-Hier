@@ -74,23 +74,37 @@ def find_gap(state: SkillGapState) -> SkillGapState:
 
 # ── Node 4 — Suggest Resources ────────────────────
 def suggest_resources(state: SkillGapState) -> SkillGapState:
-    prompt = f"""
-    For each missing skill, suggest the best FREE learning resource.
-    Missing skills: {state["missing_skills"]}
-    
-    Return a Python dictionary like:
-    {{"skill_name": "resource_url_or_name", ...}}
-    
-    Use YouTube, freeCodeCamp, or official docs.
-    Return ONLY the dictionary. No explanation.
-    """
+    if not state["missing_skills"]:
+        return {**state, "resources": {}}
+
+    prompt = f"""For each missing skill below, suggest ONE best free learning resource URL.
+Missing skills: {state["missing_skills"]}
+
+Return ONLY a valid Python dictionary. No markdown, no explanation, no code block.
+Example format:
+{{"python": "https://docs.python.org", "sql": "https://www.w3schools.com/sql"}}
+
+Use YouTube, freeCodeCamp, official docs, or Coursera free courses.
+Return ONLY the dictionary on a single line."""
+
     response = llm.invoke(prompt)
+    raw = response.content.strip()
+
+    # Strip markdown code blocks if present
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1]  # remove first line (```python or ```)
+        raw = raw.rsplit("```", 1)[0].strip()  # remove trailing ```
+
     try:
-        resources = eval(response.content.strip())
+        resources = eval(raw)
         if not isinstance(resources, dict):
             resources = {}
-    except:
-        resources = {}
+    except Exception:
+        # Fallback: build static resource links for known skills
+        resources = {
+            skill: f"https://www.google.com/search?q={skill.replace(' ', '+')}+tutorial+free"
+            for skill in state["missing_skills"]
+        }
     return {**state, "resources": resources}
 
 # ── Build Graph ───────────────────────────────────

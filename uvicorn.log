@@ -1,6 +1,77 @@
+INFO:     Will watch for changes in these directories: ['/Users/yashshakya787/Pro Hair/Backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [94063] using StatReload
 /Users/yashshakya787/Pro Hair/Backend/venv2/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
-INFO:     Started server process [91350]
+INFO:     Started server process [94107]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52032 - "POST /api/v1/find-internships HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52212 - "POST /api/v1/find-internships HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52231 - "POST /api/v1/find-internships HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'agents/internship_agent.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94107]
+/Users/yashshakya787/Pro Hair/Backend/venv2/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [94580]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'utils/internship_scraper.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94580]
+/Users/yashshakya787/Pro Hair/Backend/venv2/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [94586]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:53008 - "POST /api/v1/find-internships HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'agents/internship_agent.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94586]
+/Users/yashshakya787/Pro Hair/Backend/venv2/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [94797]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:53274 - "POST /api/v1/find-internships HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94797]
+/Users/yashshakya787/Pro Hair/Backend/venv2/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [94948]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:54264 - "POST /api/v1/find-internships HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54308 - "POST /api/v1/cover-letter HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54347 - "POST /api/v1/cover-letter HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64043 - "POST /api/v1/find-internships HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'agents/skill_gap_agent.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94948]
+/Users/yashshakya787/Pro Hair/Backend/venv2/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [2968]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'agents/cover_letter_agent.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2968]
+/Users/yashshakya787/Pro Hair/Backend/venv2/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [3088]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

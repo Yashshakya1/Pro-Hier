@@ -55,47 +55,56 @@ from utils.internship_scraper import scrape_live_internships
 
 # ── Node 2 — Find Internships ─────────────────────
 def find_internships(state: InternshipState) -> InternshipState:
-    # 1. SCRAPE REAL LISTINGS FIRST
     location = state.get("location", "")
-    real_internships = scrape_live_internships(state["field"], location)
+    role = state["field"]
     
-    if not real_internships:
-        # Fallback if scraper fails
-        prompt = f"""
-        Suggest 5 real internship opportunities for this candidate. Do NOT invent stipends (use 'Standard').
-        Give actual general search links for the 'link' property.
-        
-        Field: {state["field"]}
-        Location: {location}
-        Profile: {state["profile_summary"]}
-        
-        Return a Python list of 5 dictionaries:
-        [{{ "company": "...", "role": "...", "duration": "...", "stipend": "Standard", "platform": "LinkedIn", "match_score": 85, "link": "https://..." }}]
-        Return ONLY the list. No explanation.
-        """
-    else:
-        # USE REAL DATA TO PREVENT HALLUCINATIONS
-        prompt = f"""
-        Here is a list of REAL LIVE internship postings from the web right now:
-        {real_internships}
-        
-        Candidate Profile: {state["profile_summary"]}
-        
-        Filter and select the top 5 most relevant internships from the real list provided above for the candidate.
-        Calculate a 'match_score' (out of 100) for each.
-        You MUST keep the exact same 'company', 'role', 'stipend', 'duration', 'platform', and 'link' as the real postings. DO NOT MODIFY THE LINKS OR DETAILS.
-        
-        Return a Python list of dictionaries:
-        [{{ "company": "...", "role": "...", "duration": "...", "stipend": "...", "platform": "Internshala", "match_score": 85, "link": "https://..." }}]
-        Return ONLY the Python list. No explanation.
-        """
+    # 1. SCRAPE REAL LISTINGS FIRST
+    real_internships = scrape_live_internships(role, location)
+    
+    # 2. INSTRUCT LLM TO COMBINE REAL POSTINGS + 15 PLATFORM DEEP LINKS
+    prompt = f"""
+    The user strictly requested to see jobs ONLY from the last 3 days across EXACTLY these platforms:
+    LinkedIn, Indeed, Glassdoor, Handshake, Internshala, LetsIntern, Twenty19, HelloIntern, Freshersworld, Idealist, Naukri, Firstnaukri, Qureos, Company Career Pages, University Career Portals.
+    
+    Natively scraped LIVE postings (already filtered < 3 days):
+    {real_internships}
+    
+    Candidate Profile: {state["profile_summary"]}
+    Role: {role}
+    Location: {location}
+    
+    INSTRUCTIONS (STRICT):
+    1. You MUST include ALL the REAL LIVE postings from the scraped data above EXACTLY as they are at the very beginning of the list. Guarantee a high integer 'match_score' (e.g. 95) for them.
+    2. For ALL the other platforms in the list above, you MUST create a custom "Portal Card".
+       - "company": "[Platform Name] Deep Link Portal"
+       - "role": "Tap Here to Browse {role} Matches"
+       - "duration": "Live Search"
+       - "stipend": "Check Portal"
+       - "platform": "[Platform Name]"
+       - "match_score": 90
+       - "link": A functionally correct Deep Link Search URL restricted to the LAST 3 DAYS (e.g., Indeed uses '&fromage=3'). MUST start with https://
+    3. You must output exactly 15-20 dictionaries total (real ones + portal cards) so the user sees every requested platform on their screen.
+    
+    Return ONLY a highly valid JSON array of objects. Do not use Python `None` or formatting like ```json.
+    [{{ "company": "...", "role": "...", "duration": "...", "stipend": "...", "platform": "Internshala", "match_score": 85, "link": "https://..." }}]
+    """
         
     response = llm.invoke(prompt)
     try:
-        internships = eval(response.content.strip())
+        import json
+        content = response.content.strip()
+        if content.startswith("```json"):
+            content = content[7:-3].strip()
+        internships = json.loads(content)
         if not isinstance(internships, list):
             internships = real_internships[:5] if real_internships else []
-    except:
+            
+        # Sanitize URLs to prevent 400 Bad Request if LLM generated spaces in deep links
+        for job in internships:
+            if "link" in job and isinstance(job["link"], str):
+                job["link"] = job["link"].replace(" ", "%20")
+    except Exception as e:
+        print(f"JSON Parse Error: {{e}}")
         internships = real_internships[:5] if real_internships else []
     
     return {**state, "internships": internships}
