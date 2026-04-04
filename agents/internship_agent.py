@@ -10,7 +10,6 @@ load_dotenv()
 class InternshipState(TypedDict):
     resume_text: str
     field: str              # "AI/ML", "Web Dev", etc
-    user_type: str          # "Student", "Fresher"
     location: str           # User's target location
     profile_summary: str
     internships: List[dict]
@@ -31,7 +30,6 @@ def analyze_profile(state: InternshipState) -> InternshipState:
     
     Resume: {state["resume_text"]}
     Field: {state["field"]}
-    User Type: {state["user_type"]}
     
     Return a Python dictionary:
     {{
