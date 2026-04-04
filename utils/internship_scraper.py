@@ -103,7 +103,7 @@ def scrape_internshala(field: str, location: str = "", seen: set = None) -> list
                 "platform": "Internshala",
                 "link": link
             })
-            if len(internships) >= 25: # Increased Limit
+            if len(internships) >= 50: # Increased Limit
                 break
         return internships
     except:
@@ -153,23 +153,66 @@ def scrape_linkedin_live(field: str, location: str = "", seen: set = None) -> li
                 "link": link
             })
             
-            if len(internships) >= 25:
+            if len(internships) >= 50:
                 break
             
         return internships
     except:
         return []
 
+def scrape_remoteok(field: str, seen: set = None) -> list:
+    """Scrape RemoteOK JSON API for remote internships/jobs."""
+    if seen is None:
+        seen = set()
+    try:
+        url = "https://remoteok.com/api"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        response = requests.get(url, headers=headers, timeout=10)
+        jobs = response.json()
+        internships = []
+        
+        # Skip the first item (it's often a legal/info object)
+        for job in jobs[1:]:
+            if not isinstance(job, dict):
+                continue
+            title = job.get('position', 'Internship Role')
+            
+            if not is_relevant(title, field):
+                continue
+                
+            company = job.get('company', 'Company')
+            fingerprint = f"{title.lower().strip()}||{company.lower().strip()}"
+            if fingerprint in seen:
+                continue
+            seen.add(fingerprint)
+            
+            internships.append({
+                "role": title,
+                "company": company,
+                "stipend": "Paid (Check Listing)",
+                "duration": "Remote",
+                "platform": "RemoteOK",
+                "link": job.get('url', url)
+            })
+            if len(internships) >= 30:
+                break
+        return internships
+    except:
+        return []
+
 def scrape_live_internships(field: str, location: str = "") -> list:
-    """Combines LinkedIn and Internshala results strictly < 3 days."""
+    """Combines LinkedIn, Internshala, and RemoteOK results."""
     seen = set()
     linkedin = scrape_linkedin_live(field, location, seen)
     internshala = scrape_internshala(field, location, seen)
+    remoteok = scrape_remoteok(field, seen)
     
     # Interleave results for variety
     combined = []
-    for i in range(max(len(linkedin), len(internshala))):
+    max_len = max(len(linkedin), len(internshala), len(remoteok))
+    for i in range(max_len):
         if i < len(linkedin): combined.append(linkedin[i])
         if i < len(internshala): combined.append(internshala[i])
+        if i < len(remoteok): combined.append(remoteok[i])
         
-    return combined[:50]
+    return combined[:150]
