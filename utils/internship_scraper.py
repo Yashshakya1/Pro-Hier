@@ -212,19 +212,60 @@ def scrape_remoteok(field: str, seen: set = None) -> list:
     except:
         return []
 
+def scrape_jobicy(field: str, seen: set = None) -> list:
+    """Scrape Jobicy JSON API for unblocked remote tech jobs."""
+    if seen is None:
+        seen = set()
+    try:
+        url = "https://jobicy.com/api/v2/remote-jobs"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        response = requests.get(url, headers=headers, timeout=10)
+        jobs = response.json().get('jobs', [])
+        internships = []
+        
+        for job in jobs:
+            title = job.get('jobTitle', 'Internship Role')
+            
+            if not is_relevant(title, field):
+                continue
+                
+            company = job.get('companyName', 'Company')
+            fingerprint = f"{title.lower().strip()}||{company.lower().strip()}"
+            if fingerprint in seen:
+                continue
+            seen.add(fingerprint)
+            
+            geo = job.get('jobGeo', 'Anywhere')
+            
+            internships.append({
+                "role": title,
+                "company": company,
+                "stipend": "Paid (Check Listing)",
+                "duration": f"Remote ({geo})",
+                "platform": "Jobicy",
+                "link": job.get('url', url)
+            })
+            if len(internships) >= 30:
+                break
+        return internships
+    except:
+        return []
+
 def scrape_live_internships(field: str, location: str = "") -> list:
-    """Combines LinkedIn, Internshala, and RemoteOK results."""
+    """Combines LinkedIn, Internshala, RemoteOK, and Jobicy results."""
     seen = set()
     linkedin = scrape_linkedin_live(field, location, seen)
     internshala = scrape_internshala(field, location, seen)
     remoteok = scrape_remoteok(field, seen)
+    jobicy = scrape_jobicy(field, seen)
     
     # Interleave results for variety
     combined = []
-    max_len = max(len(linkedin), len(internshala), len(remoteok))
+    max_len = max(len(linkedin), len(internshala), len(remoteok), len(jobicy))
     for i in range(max_len):
         if i < len(linkedin): combined.append(linkedin[i])
         if i < len(internshala): combined.append(internshala[i])
         if i < len(remoteok): combined.append(remoteok[i])
+        if i < len(jobicy): combined.append(jobicy[i])
         
     return combined[:150]
