@@ -14,7 +14,6 @@ async def find_jobs(request: Request):
     field = ""
     location = ""
     country = "India"
-    
     user_type = "Fresher"
     
     if "application/json" in content_type:
@@ -52,17 +51,64 @@ async def find_jobs(request: Request):
             "profile_summary": "",
             "jobs": [],
             "best_match": {},
-            "tips": ""
+            "tips": "",
+            "boost_keywords": []
         })
         
         return {
             "profile_summary": result.get("profile_summary", ""),
             "jobs": result.get("jobs", []),
             "best_match": result.get("best_match", {}),
-            "tips": result.get("tips", "")
+            "tips": result.get("tips", ""),
+            "boost_keywords": result.get("boost_keywords", [])
         }
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
         print(f"Job Agent Error: {error_details}")
         raise HTTPException(status_code=500, detail=f"AI Agent Error: {str(e)}")
+
+@router.post("/alert-check")
+async def alert_check(request: Request):
+    """
+    Optimized endpoint for background job alerts.
+    """
+    data = await request.json()
+    resume_text = data.get("resume_text", "")
+    field = data.get("field", "")
+    location = data.get("location", "")
+    country = data.get("country", "India")
+    user_type = data.get("user_type", "Fresher")
+
+    try:
+        result = job_agent.invoke({
+            "resume_text": resume_text,
+            "field": field,
+            "location": location,
+            "country": country,
+            "user_type": user_type,
+            "profile_summary": "",
+            "jobs": [],
+            "best_match": {},
+            "tips": "",
+            "boost_keywords": []
+        })
+        
+        best_match = result.get("best_match", {})
+        score = int(best_match.get("match_score", 0))
+        
+        if score >= 90:
+            # Detect type
+            is_internship = "intern" in best_match.get("role", "").lower() or user_type == "Student"
+            job_type = "internship" if is_internship else "job"
+            
+            return {
+                "new_match": True,
+                "job": best_match,
+                "type": job_type,
+                "boost_keywords": result.get("boost_keywords", [])
+            }
+            
+        return {"new_match": False}
+    except Exception as e:
+        return {"error": str(e)}

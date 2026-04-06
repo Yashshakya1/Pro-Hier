@@ -47,14 +47,16 @@ async def find_internships(request: Request):
             "profile_summary": "",
             "internships": [],
             "best_match": {},
-            "application_tips": ""
+            "application_tips": "",
+            "boost_keywords": []
         })
         
         return {
             "profile_summary": result.get("profile_summary", ""),
             "internships": result.get("internships", []),
             "best_match": result.get("best_match", {}),
-            "application_tips": result.get("application_tips", "")
+            "application_tips": result.get("application_tips", ""),
+            "boost_keywords": result.get("boost_keywords", [])
         }
     except Exception as e:
         print(f"Agent Error: {str(e)}")

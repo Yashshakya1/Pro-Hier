@@ -2,6 +2,8 @@ from langgraph.graph import StateGraph, END
 from langchain_groq import ChatGroq
 from typing import TypedDict, List
 import os
+import re
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,7 +17,7 @@ class InternshipState(TypedDict):
     internships: List[dict]
     best_match: dict
     application_tips: str
-    application_tips: str
+    boost_keywords: List[str]
 
 # ── LLM ───────────────────────────────────────────
 llm = ChatGroq(
@@ -95,18 +97,37 @@ def find_best_match(state: InternshipState) -> InternshipState:
 
 # ── Node 4 — Application Tips ─────────────────────
 def generate_tips(state: InternshipState) -> InternshipState:
-    prompt = f"""
-    Give 3 specific application tips for this internship.
+    if not state["best_match"]: return {**state, "application_tips": "Apply early!", "boost_keywords": []}
     
-    Best Match: {state["best_match"]}
-    Candidate Profile: {state["profile_summary"]}
+    prompt = f"""
+    Analyze the gap between this candidate and the Internship.
+    Profile: {state["profile_summary"]}
+    Internship: {state["best_match"]}
     Field: {state["field"]}
     
-    Return 3 actionable, specific tips.
-    Be concise and practical.
+    Return exactamente 2 parts in JSON:
+    1. "tips": "3 concise, practical application tips"
+    2. "boost_keywords": ["Exactly 3 missing keywords/skills to add to CV to reach 98% match"]
     """
-    response = llm.invoke(prompt)
-    return {**state, "application_tips": response.content}
+    
+    try:
+        response = llm.invoke(prompt)
+        content = response.content.strip()
+        # Robust JSON Extraction
+        match = re.search(r'\{.*\}', content, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+        else:
+            data = json.loads(content)
+            
+        return {
+            **state,
+            "application_tips": data.get("tips", "Highlight your relevant projects."),
+            "boost_keywords": data.get("boost_keywords", [])[:3]
+        }
+    except Exception as e:
+        print(f"Internship Tips Error: {e}")
+        return {**state, "application_tips": "Customize your resume for this role.", "boost_keywords": ["Specific Skills", "Core Projects", "Soft Skills"]}
 
 # ── Build Graph ───────────────────────────────────
 def build_internship_agent():

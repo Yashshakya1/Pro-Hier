@@ -2,6 +2,8 @@ from langgraph.graph import StateGraph, END
 from langchain_groq import ChatGroq
 from typing import TypedDict, List
 import os
+import re
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,6 +18,7 @@ class JobState(TypedDict):
     jobs: List[dict]
     best_match: dict
     tips: str
+    boost_keywords: List[str]
 
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
@@ -60,10 +63,36 @@ def find_best(state: JobState) -> JobState:
     return {**state, "best_match": best}
 
 def generate_tips(state: JobState) -> JobState:
-    if not state["best_match"]: return {**state, "tips": ""}
-    prompt = f"Give 3 tips for applying to: {state['best_match']['role']} at {state['best_match']['company']}\nCV: {state['profile_summary']}"
-    resp = llm.invoke(prompt)
-    return {**state, "tips": resp.content}
+    if not state["best_match"]: return {**state, "tips": "", "boost_keywords": []}
+    
+    prompt = f"""
+    Analyze the gap between this CV and the Job.
+    CV Summary: {state['profile_summary']}
+    Job: {state['best_match']['role']} at {state['best_match']['company']}
+    
+    Return exactly 2 parts in JSON:
+    1. "tips": "3 short application tips"
+    2. "boost_keywords": ["Exactly 3 missing skills/keywords to add to CV to reach 98% match"]
+    """
+    
+    try:
+        resp = llm.invoke(prompt)
+        content = resp.content.strip()
+        # Robust JSON Extraction
+        match = re.search(r'\{.*\}', content, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+        else:
+            data = json.loads(content)
+            
+        return {
+            **state, 
+            "tips": data.get("tips", "Apply with confidence!"),
+            "boost_keywords": data.get("boost_keywords", [])[:3]
+        }
+    except Exception as e:
+        print(f"Job Tips Error: {e}")
+        return {**state, "tips": "Customize your resume for this role.", "boost_keywords": ["Relevant Tech Stack", "Industry Experience", "Soft Skills"]}
 
 def build_job_agent():
     graph = StateGraph(JobState)
