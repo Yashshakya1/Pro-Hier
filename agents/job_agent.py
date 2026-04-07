@@ -37,37 +37,49 @@ def analyze_profile(state: JobState) -> JobState:
 
 def fetch_jobs(state: JobState) -> JobState:
     from utils.job_aggregator import find_jobs_realtime
-    # Pass user_type down to aggregator for source-level filtering
-    raw_jobs = find_jobs_realtime(state["field"], state["location"], state["country"], state["user_type"])
-    
-    scored_jobs = []
-    for i, job in enumerate(raw_jobs):
-        if i < 20:
-            prompt = f"CV: {state['resume_text'][:800]}\nUser Level: {state['user_type']}\nJob: {job['role']} at {job['company']}\nScore 0-100 based on if this job fits a {state['user_type']}? Return only number."
-            try: 
-                score_content = llm.invoke(prompt).content.strip()
-                score = int(re.search(r'\d+', score_content).group()) # Robust parsing
-            except: 
-                score = 85
-        else:
-            score = max(70, 95 - (i % 20))
+    try:
+        # Pass user_type down to aggregator for source-level filtering
+        raw_jobs = find_jobs_realtime(state["field"], state["location"], state["country"], state["user_type"])
         
-        job["match_score"] = score
-        scored_jobs.append(job)
-        
-    return {**state, "jobs": scored_jobs}
+        if not raw_jobs:
+            print("⚠️ [FETCH] No jobs found from scrapers.")
+            return {**state, "jobs": []}
+
+        scored_jobs = []
+        for i, job in enumerate(raw_jobs):
+            # Limit LLM scoring to first 5 jobs for speed and reliability
+            if i < 5:
+                prompt = f"CV: {state['resume_text'][:800]}\nUser Level: {state['user_type']}\nJob: {job['role']} at {job['company']}\nScore 0-100 based on fit. Return ONLY number."
+                try: 
+                    score_content = llm.invoke(prompt).content.strip()
+                    extracted = re.search(r'\d+', score_content)
+                    score = int(extracted.group()) if extracted else 80
+                except: 
+                    score = 85
+            else:
+                score = max(50, 90 - (i * 2)) 
+            
+            job["match_score"] = score
+            scored_jobs.append(job)
+            
+        return {**state, "jobs": scored_jobs}
+    except Exception as e:
+        print(f"❌ [FETCH ERROR] {e}")
+        return {**state, "jobs": []}
 
 def find_best(state: JobState) -> JobState:
-    if not state["jobs"]: return {**state, "best_match": {}}
-    best = max(state["jobs"], key=lambda x: x.get("match_score", 0))
-    return {**state, "best_match": best}
+    if not state.get("jobs"): return {**state, "best_match": {}}
+    try:
+        best = max(state["jobs"], key=lambda x: x.get("match_score", 0))
+        return {**state, "best_match": best}
+    except:
+        return {**state, "best_match": {}}
 
 def generate_tips(state: JobState) -> JobState:
-    if not state["best_match"]: return {**state, "tips": "", "boost_keywords": []}
+    if not state.get("best_match"): return {**state, "tips": "", "boost_keywords": []}
     
     prompt = f"""
     Analyze the gap between this CV and the Job.
-    CV Summary: {state['profile_summary']}
     Job: {state['best_match']['role']} at {state['best_match']['company']}
     
     Return exactly 2 parts in JSON:
@@ -78,20 +90,16 @@ def generate_tips(state: JobState) -> JobState:
     try:
         resp = llm.invoke(prompt)
         content = resp.content.strip()
-        # Robust JSON Extraction
         match = re.search(r'\{.*\}', content, re.DOTALL)
-        if match:
-            data = json.loads(match.group())
-        else:
-            data = json.loads(content)
+        data = json.loads(match.group()) if match else json.loads(content)
             
         return {
             **state, 
             "tips": data.get("tips", "Apply with confidence!"),
-            "boost_keywords": data.get("boost_keywords", [])[:3]
+            "boost_keywords": data.get("boost_keywords", ["Experience", "Skills", "Projects"])[:3]
         }
     except Exception as e:
-        print(f"Job Tips Error: {e}")
+        print(f"⚠️ [TIPS ERROR] {e}")
         return {**state, "tips": "Customize your resume for this role.", "boost_keywords": ["Relevant Tech Stack", "Industry Experience", "Soft Skills"]}
 
 def build_job_agent():

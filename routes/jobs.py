@@ -42,6 +42,7 @@ async def find_jobs(request: Request):
                 os.remove(temp_path)
     
     try:
+        print(f"🚀 [JOBS] Starting search for: {field} in {location}")
         result = job_agent.invoke({
             "resume_text": resume_text,
             "field": field,
@@ -55,6 +56,8 @@ async def find_jobs(request: Request):
             "boost_keywords": []
         })
         
+        print(f"✅ [JOBS] Found {len(result.get('jobs', []))} potential matches.")
+        
         return {
             "profile_summary": result.get("profile_summary", ""),
             "jobs": result.get("jobs", []),
@@ -65,8 +68,13 @@ async def find_jobs(request: Request):
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        print(f"Job Agent Error: {error_details}")
-        raise HTTPException(status_code=500, detail=f"AI Agent Error: {str(e)}")
+        print(f"❌ [JOBS ERROR] Crashed during agent execution:\n{error_details}")
+        # Return a 200 with error details so the frontend can display the ACTUAL error
+        return {
+            "error": str(e),
+            "details": "AI Agent failed to process your request. Check backend logs.",
+            "jobs": []
+        }
 
 @router.post("/alert-check")
 async def alert_check(request: Request):
