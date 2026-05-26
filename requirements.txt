@@ -13,3 +13,4 @@ groq
 beautifulsoup4
 requests
 langchain-cerebras
+razorpay
