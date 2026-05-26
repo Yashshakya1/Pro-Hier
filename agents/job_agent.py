@@ -1,12 +1,9 @@
 from langgraph.graph import StateGraph, END
-from langchain_groq import ChatGroq
 from typing import TypedDict, List
 import os
 import re
 import json
-from dotenv import load_dotenv
-
-load_dotenv()
+from utils.llm_client import llm
 
 class JobState(TypedDict):
     resume_text: str
@@ -19,11 +16,6 @@ class JobState(TypedDict):
     best_match: dict
     tips: str
     boost_keywords: List[str]
-
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY")
-)
 
 def analyze_profile(state: JobState) -> JobState:
     prompt = f"Analyze this resume for a {state['user_type']} in {state['field']}:\n{state['resume_text']}\nReturn a 2-line summary in JSON: {{'summary': '...'}}"

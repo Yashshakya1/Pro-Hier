@@ -1,12 +1,5 @@
-from langchain_groq import ChatGroq
 from pydantic import BaseModel
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-groq_api_key = os.getenv("GROQ_API_KEY")
-
-llm = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=groq_api_key)
+from utils.llm_client import llm
 
 class CoverLetterRequest(BaseModel):
     resume_text: str

@@ -1,12 +1,9 @@
 from langgraph.graph import StateGraph, END
-from langchain_groq import ChatGroq
 from typing import TypedDict, List
 import os
-from dotenv import load_dotenv
+from utils.llm_client import llm
 
-load_dotenv()
-
-# ── State ──────────────────────────────────────────
+# State
 class InterviewState(TypedDict):
     resume_text: str
     job_role: str
@@ -21,13 +18,7 @@ class InterviewState(TypedDict):
     question_count: int
     difficulty: str
 
-# ── LLM ───────────────────────────────────────────
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY")
-)
-
-# ── Node 1 — Analyze Profile ──────────────────────
+# Node 1 — analyze profile
 def analyze_profile(state: InterviewState) -> InterviewState:
     count = state.get("question_count", 5)
     difficulty = state.get("difficulty", "Medium")
@@ -68,7 +59,7 @@ def analyze_profile(state: InterviewState) -> InterviewState:
     current = questions[0] if questions else "Tell me about yourself."
     return {**state, "questions": questions, "current_question": current}
 
-# ── Node 2 — Generate Question ────────────────────
+# Node 2 — generate question
 def generate_question(state: InterviewState) -> InterviewState:
     prompt = f"""
     Rephrase this interview question to sound natural and conversational:
@@ -78,7 +69,7 @@ def generate_question(state: InterviewState) -> InterviewState:
     response = llm.invoke(prompt)
     return {**state, "current_question": response.content.strip()}
 
-# ── Node 3 — Evaluate Answer ──────────────────────
+# Node 3 — Evaluate Answer
 def evaluate_answer(state: InterviewState) -> InterviewState:
     prompt = f"""
     You are an expert interviewer evaluating a candidate's answer.
@@ -98,7 +89,7 @@ def evaluate_answer(state: InterviewState) -> InterviewState:
     response = llm.invoke(prompt)
     return {**state, "evaluation": response.content}
 
-# ── Node 4 — Generate Followup ────────────────────
+# Node 4 — Generate Followup
 def generate_followup(state: InterviewState) -> InterviewState:
     prompt = f"""
     Based on this interview answer, generate ONE smart follow-up question.
@@ -109,7 +100,7 @@ def generate_followup(state: InterviewState) -> InterviewState:
     response = llm.invoke(prompt)
     return {**state, "followup_question": response.content.strip()}
 
-# ── Node 5 — Final Score ──────────────────────────
+# Node 5 — Final Score
 def calculate_final_score(state: InterviewState) -> InterviewState:
     prompt = f"""
     Based on this interview evaluation, give:
@@ -137,7 +128,7 @@ def calculate_final_score(state: InterviewState) -> InterviewState:
     
     return {**state, "final_score": score, "final_feedback": response.content}
 
-# ── Build Graph ───────────────────────────────────
+# Build Graph
 def build_interview_agent():
     graph = StateGraph(InterviewState)
     

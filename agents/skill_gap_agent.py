@@ -1,12 +1,9 @@
 from langgraph.graph import StateGraph, END
-from langchain_groq import ChatGroq
 from typing import TypedDict, List
 import os
-from dotenv import load_dotenv
+from utils.llm_client import llm
 
-load_dotenv()
-
-# ── State ──────────────────────────────────────────
+# State
 class SkillGapState(TypedDict):
     resume_text: str
     jd_text: str
@@ -17,13 +14,7 @@ class SkillGapState(TypedDict):
     resources: dict
     gap_score: int
 
-# ── LLM ───────────────────────────────────────────
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY")
-)
-
-# ── Node 1 — Extract Resume Skills ───────────────
+# Node 1 — Extract Resume Skills
 def extract_resume_skills(state: SkillGapState) -> SkillGapState:
     prompt = f"""
     Extract all technical skills from this resume.
@@ -39,7 +30,7 @@ def extract_resume_skills(state: SkillGapState) -> SkillGapState:
         skills = []
     return {**state, "resume_skills": skills}
 
-# ── Node 2 — Extract JD Skills ────────────────────
+# Node 2 — Extract JD Skills
 def extract_jd_skills(state: SkillGapState) -> SkillGapState:
     prompt = f"""
     Extract all required skills from this Job Description.
@@ -55,7 +46,7 @@ def extract_jd_skills(state: SkillGapState) -> SkillGapState:
         skills = []
     return {**state, "required_skills": skills}
 
-# ── Node 3 — Find Gap ─────────────────────────────
+#  Node 3 — Find Gap
 def find_gap(state: SkillGapState) -> SkillGapState:
     resume = [s.lower() for s in state["resume_skills"]]
     required = [s.lower() for s in state["required_skills"]]
@@ -72,7 +63,7 @@ def find_gap(state: SkillGapState) -> SkillGapState:
         "gap_score": score
     }
 
-# ── Node 4 — Suggest Resources ────────────────────
+# Node 4 — Suggest Resources
 def suggest_resources(state: SkillGapState) -> SkillGapState:
     if not state["missing_skills"]:
         return {**state, "resources": {}}
@@ -107,7 +98,7 @@ Return ONLY the dictionary on a single line."""
         }
     return {**state, "resources": resources}
 
-# ── Build Graph ───────────────────────────────────
+# Build Graph
 def build_skill_gap_agent():
     graph = StateGraph(SkillGapState)
     

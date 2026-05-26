@@ -1,12 +1,9 @@
 from langgraph.graph import StateGraph, END
-from langchain_groq import ChatGroq
 from typing import TypedDict, List
 import os
-from dotenv import load_dotenv
+from utils.llm_client import llm
 
-load_dotenv()
-
-# ── State ──────────────────────────────────────────
+# State
 class SmartApplyState(TypedDict):
     resume_text: str
     job_title: str
@@ -17,13 +14,7 @@ class SmartApplyState(TypedDict):
     cover_letter: str
     application_status: str
 
-# ── LLM ───────────────────────────────────────────
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY")
-)
-
-# ── Node 1 — Analyze Match ────────────────────────
+# Node 1 — Analyze Match
 def analyze_match(state: SmartApplyState) -> SmartApplyState:
     prompt = f"""
     Compare this resume with the job description.
@@ -53,7 +44,7 @@ def analyze_match(state: SmartApplyState) -> SmartApplyState:
     
     return {**state, "match_score": score, "match_reasons": reasons}
 
-# ── Node 2 — Generate Cover Letter ───────────────
+#  Node 2 — Generate Cover Letter
 def generate_cover_letter(state: SmartApplyState) -> SmartApplyState:
     prompt = f"""
     Write a professional and personalized cover letter.
@@ -75,12 +66,12 @@ def generate_cover_letter(state: SmartApplyState) -> SmartApplyState:
     response = llm.invoke(prompt)
     return {**state, "cover_letter": response.content}
 
-# ── Node 3 — Update Application Status ───────────
+# Node 3 — Update Application Status
 def update_status(state: SmartApplyState) -> SmartApplyState:
     status = "Applied ✅" if state["match_score"] >= 50 else "Low Match ⚠️"
     return {**state, "application_status": status}
 
-# ── Build Graph ───────────────────────────────────
+# Build Graph
 def build_smart_apply_agent():
     graph = StateGraph(SmartApplyState)
     

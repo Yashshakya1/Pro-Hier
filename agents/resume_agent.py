@@ -1,13 +1,10 @@
 from langgraph.graph import StateGraph, END
-from langchain_groq import ChatGroq
 from typing import TypedDict
 from utils.pdf_parser import extract_text_from_pdf
 import os
-from dotenv import load_dotenv
+from utils.llm_client import llm
 
-load_dotenv()
-
-# ── State ──────────────────────────────────────────
+# State
 class ResumeState(TypedDict):
     pdf_path: str
     jd_text: str
@@ -17,18 +14,12 @@ class ResumeState(TypedDict):
     ats_score: int
     feedback: str
 
-# ── LLM ───────────────────────────────────────────
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY")
-)
-
-# ── Node 1 ────────────────────────────────────────
+# Node 1
 def parse_resume(state: ResumeState) -> ResumeState:
     text = extract_text_from_pdf(state["pdf_path"])
     return {**state, "resume_text": text}
 
-# ── Node 2 ────────────────────────────────────────
+# Node 2
 def extract_skills(state: ResumeState) -> ResumeState:
     prompt = f"""
     Extract all technical and soft skills from this resume.
@@ -44,7 +35,7 @@ def extract_skills(state: ResumeState) -> ResumeState:
         skills = []
     return {**state, "skills": skills}
 
-# ── Node 3 ────────────────────────────────────────
+# Node 3
 def parse_jd(state: ResumeState) -> ResumeState:
     prompt = f"""
     Extract all required skills and keywords from this Job Description.
@@ -60,7 +51,7 @@ def parse_jd(state: ResumeState) -> ResumeState:
         keywords = []
     return {**state, "jd_keywords": keywords}
 
-# ── Node 4 ────────────────────────────────────────
+# Node 4
 def ats_score_calculator(state: ResumeState) -> ResumeState:
     skills = [s.lower() for s in state["skills"]]
     keywords = [k.lower() for k in state["jd_keywords"]]
@@ -70,7 +61,7 @@ def ats_score_calculator(state: ResumeState) -> ResumeState:
     score = int((matched / len(keywords)) * 100)
     return {**state, "ats_score": score}
 
-# ── Node 5 ────────────────────────────────────────
+# Node 5
 def feedback_generator(state: ResumeState) -> ResumeState:
     prompt = f"""
     You are a professional resume coach.
@@ -87,7 +78,7 @@ def feedback_generator(state: ResumeState) -> ResumeState:
     response = llm.invoke(prompt)
     return {**state, "feedback": response.content}
 
-# ── Build Graph ───────────────────────────────────
+# Build Graph
 def build_resume_agent():
     graph = StateGraph(ResumeState)
     graph.add_node("parse_resume", parse_resume)

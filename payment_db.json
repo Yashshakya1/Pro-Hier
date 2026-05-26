@@ -1,0 +1,17 @@
+{
+    "users": {},
+    "usage": {
+        "BdfSnGPM5UXPcz7vnM5jPEcFZqi2_2026-04-27": {
+            "resume": 1,
+            "interview": 1,
+            "apply": 2,
+            "job_search": 1
+        },
+        "BdfSnGPM5UXPcz7vnM5jPEcFZqi2_2026-05-26": {
+            "resume": 3,
+            "job_search": 1,
+            "interview": 1,
+            "skill_gap": 1
+        }
+    }
+}

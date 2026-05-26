@@ -1,14 +1,11 @@
 from langgraph.graph import StateGraph, END
-from langchain_groq import ChatGroq
 from typing import TypedDict, List
 import os
 import re
 import json
-from dotenv import load_dotenv
+from utils.llm_client import llm
 
-load_dotenv()
-
-# ── State ──────────────────────────────────────────
+# State
 class InternshipState(TypedDict):
     resume_text: str
     field: str              # "AI/ML", "Web Dev", etc
@@ -19,13 +16,8 @@ class InternshipState(TypedDict):
     application_tips: str
     boost_keywords: List[str]
 
-# ── LLM ───────────────────────────────────────────
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY")
-)
+# Node 1 — Analyze Profile
 
-# ── Node 1 — Analyze Profile ──────────────────────
 def analyze_profile(state: InternshipState) -> InternshipState:
     prompt = f"""
     Analyze this candidate profile for internship matching.
@@ -50,10 +42,10 @@ def analyze_profile(state: InternshipState) -> InternshipState:
     
     return {**state, "profile_summary": summary}
 
-# ── Helper ──────────────────────────────────────────
+# Helper
 from utils.internship_scraper import scrape_live_internships
 
-# ── Node 2 — Find Internships ─────────────────────
+# Node 2 — Find Internships
 def find_internships(state: InternshipState) -> InternshipState:
     location = state.get("location", "")
     role = state["field"]
@@ -81,7 +73,7 @@ def find_internships(state: InternshipState) -> InternshipState:
     
     return {**state, "internships": internships}
 
-# ── Node 3 — Find Best Match ──────────────────────
+# Node 3 — Find Best Match
 def find_best_match(state: InternshipState) -> InternshipState:
     if not state["internships"]:
         return {**state, "best_match": {}}
@@ -95,7 +87,7 @@ def find_best_match(state: InternshipState) -> InternshipState:
     best = sorted_internships[0]
     return {**state, "best_match": best}
 
-# ── Node 4 — Application Tips ─────────────────────
+# Node 4 — Application Tips
 def generate_tips(state: InternshipState) -> InternshipState:
     if not state["best_match"]: return {**state, "application_tips": "Apply early!", "boost_keywords": []}
     
@@ -129,7 +121,7 @@ def generate_tips(state: InternshipState) -> InternshipState:
         print(f"Internship Tips Error: {e}")
         return {**state, "application_tips": "Customize your resume for this role.", "boost_keywords": ["Specific Skills", "Core Projects", "Soft Skills"]}
 
-# ── Build Graph ───────────────────────────────────
+#  Build Graph
 def build_internship_agent():
     graph = StateGraph(InternshipState)
     
