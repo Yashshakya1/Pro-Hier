@@ -33,8 +33,8 @@ def analyze_profile(state: InternshipState) -> InternshipState:
     }}
     Return ONLY the dictionary. No explanation.
     """
-    response = llm.invoke(prompt)
     try:
+        response = llm.invoke(prompt)
         result = eval(response.content.strip())
         summary = result.get("summary", "")
     except:
