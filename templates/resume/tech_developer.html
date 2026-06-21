@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ personal_info.full_name }} — Resume</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:#0F172A; color:#E2E8F0; font-size:9.5pt; line-height:1.5; }
+  .page { width:210mm; min-height:297mm; margin:0 auto; display:flex; }
+  .sidebar { width:65mm; background:#1E293B; padding:16px 14px; border-right:1px solid #334155; }
+  .sidebar h1 { font-size:13pt; font-weight:700; color:#10B981; line-height:1.2; margin-bottom:4px; }
+  .sidebar-section { margin-top:14px; }
+  .sidebar-title { font-size:7.5pt; font-weight:700; text-transform:uppercase; letter-spacing:1.3px; color:#10B981; border-bottom:1px solid #334155; padding-bottom:2px; margin-bottom:7px; }
+  .contact-item { font-size:8pt; color:#94A3B8; margin-bottom:3px; word-break:break-all; }
+  .contact-item a { color:#67E8F9; text-decoration:none; }
+  .skill-bar-wrap { margin-bottom:6px; }
+  .skill-bar-label { display:flex; justify-content:space-between; font-size:8.5pt; color:#CBD5E1; margin-bottom:2px; }
+  .skill-bar-bg { background:#334155; height:4px; border-radius:2px; }
+  .skill-bar-fill { background:linear-gradient(90deg,#10B981,#06B6D4); height:4px; border-radius:2px; width:80%; }
+  .cert-side { margin-bottom:5px; font-size:8.5pt; color:#94A3B8; }
+  .cert-side strong { color:#CBD5E1; }
+  .main { flex:1; padding:16px 16px; }
+  .section { margin-bottom:13px; }
+  .section-title { font-size:8.5pt; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:#10B981; border-bottom:1px solid #334155; padding-bottom:2px; margin-bottom:8px; }
+  .summary { font-size:9.5pt; color:#CBD5E1; }
+  .exp-item { margin-bottom:10px; }
+  .exp-row { display:flex; justify-content:space-between; }
+  .exp-title { font-weight:600; color:#F1F5F9; font-size:9.5pt; }
+  .exp-company { color:#10B981; font-size:9pt; }
+  .exp-dur { color:#64748B; font-size:8.5pt; white-space:nowrap; font-family:'JetBrains Mono',monospace; }
+  .exp-bullets { padding-left:12px; margin-top:3px; }
+  .exp-bullets li { font-size:9pt; color:#CBD5E1; margin-bottom:2px; }
+  .exp-bullets li::marker { color:#10B981; }
+  .edu-item { margin-bottom:7px; }
+  .edu-degree { font-weight:600; color:#F1F5F9; }
+  .edu-inst { color:#94A3B8; font-size:9pt; }
+  .edu-year { color:#64748B; font-size:8.5pt; font-family:'JetBrains Mono',monospace; }
+  .proj-item { margin-bottom:9px; }
+  .proj-name { font-weight:600; color:#F1F5F9; }
+  .proj-tech { color:#67E8F9; font-size:8.5pt; font-family:'JetBrains Mono',monospace; }
+  .proj-desc { font-size:9pt; color:#94A3B8; margin-top:2px; }
+  .proj-link { color:#10B981; font-size:8.5pt; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sidebar">
+    <h1>{{ personal_info.full_name or 'Your Name' }}</h1>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Contact</div>
+      {% if personal_info.email %}<div class="contact-item">{{ personal_info.email }}</div>{% endif %}
+      {% if personal_info.phone %}<div class="contact-item">{{ personal_info.phone }}</div>{% endif %}
+      {% if personal_info.location %}<div class="contact-item">{{ personal_info.location }}</div>{% endif %}
+      {% if personal_info.github %}<div class="contact-item"><a href="{{ personal_info.github }}">GitHub ↗</a></div>{% endif %}
+      {% if personal_info.linkedin %}<div class="contact-item"><a href="{{ personal_info.linkedin }}">LinkedIn ↗</a></div>{% endif %}
+      {% if personal_info.website %}<div class="contact-item"><a href="{{ personal_info.website }}">Portfolio ↗</a></div>{% endif %}
+    </div>
+    {% if skills %}
+    <div class="sidebar-section">
+      <div class="sidebar-title">Skills</div>
+      {% for s in skills %}
+      <div class="skill-bar-wrap">
+        <div class="skill-bar-label"><span>{{ s }}</span></div>
+        <div class="skill-bar-bg"><div class="skill-bar-fill"></div></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if certifications %}
+    <div class="sidebar-section">
+      <div class="sidebar-title">Certifications</div>
+      {% for cert in certifications %}
+      <div class="cert-side"><strong>{{ cert.name }}</strong><br>{{ cert.issuer }}{% if cert.year %} · {{ cert.year }}{% endif %}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="main">
+    {% for section in section_order %}
+    {% if section == 'summary' and summary %}<div class="section"><div class="section-title">// About</div><p class="summary">{{ summary }}</p></div>{% endif %}
+    {% if section == 'experience' and experience %}<div class="section"><div class="section-title">// Experience</div>{% for exp in experience %}<div class="exp-item"><div class="exp-row"><div><div class="exp-title">{{ exp.title }}</div><div class="exp-company">{{ exp.company }}</div></div><div class="exp-dur">{{ exp.duration }}</div></div>{% if exp.bullets %}<ul class="exp-bullets">{% for b in exp.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}</div>{% endfor %}</div>{% endif %}
+    {% if section == 'education' and education %}<div class="section"><div class="section-title">// Education</div>{% for edu in education %}<div class="edu-item"><div class="edu-degree">{{ edu.degree }}</div><div class="edu-inst">{{ edu.institution }}</div><div class="edu-year">{{ edu.year }}{% if edu.grade %} · {{ edu.grade }}{% endif %}</div></div>{% endfor %}</div>{% endif %}
+    {% if section == 'projects' and projects %}<div class="section"><div class="section-title">// Projects</div>{% for proj in projects %}<div class="proj-item"><span class="proj-name">{{ proj.name }}</span>{% if proj.tech_stack %}<span class="proj-tech"> [{{ proj.tech_stack }}]</span>{% endif %}{% if proj.link %} <a class="proj-link" href="{{ proj.link }}">↗ link</a>{% endif %}<div class="proj-desc">{{ proj.description }}</div></div>{% endfor %}</div>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>
