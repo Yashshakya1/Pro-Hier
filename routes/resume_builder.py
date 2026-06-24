@@ -256,9 +256,19 @@ async def upload_photo(
             detail={"error": "pro_required", "message": "Photo upload is available for Pro users only."}
         )
 
-    allowed_types = ["image/jpeg", "image/png", "image/webp"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Only JPEG, PNG, or WebP images are allowed.")
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/jpg"]
+    content_type = file.content_type
+    if content_type == "application/octet-stream" or not content_type:
+        ext = os.path.splitext(file.filename or "")[1].lower()
+        if ext in [".jpg", ".jpeg"]:
+            content_type = "image/jpeg"
+        elif ext == ".png":
+            content_type = "image/png"
+        elif ext == ".webp":
+            content_type = "image/webp"
+
+    if content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Only JPEG, PNG, or WebP images are allowed. Got content-type: {file.content_type}")
 
     contents = await file.read()
     if len(contents) > 5 * 1024 * 1024:  # 5MB limit

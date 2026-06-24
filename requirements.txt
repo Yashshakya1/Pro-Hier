@@ -14,3 +14,6 @@ beautifulsoup4
 requests
 langchain-cerebras
 razorpay
+weasyprint
+pillow
+jinja2
