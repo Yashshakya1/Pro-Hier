@@ -41,75 +41,65 @@ _usage_store: dict = {}   # { user_id: { "month": "2025-01", "downloads": 0 } }
 # Pydantic Models
 # ══════════════════════════════════════════════════════════════════════
 
-class PersonalInfo(BaseModel):
-    full_name: str = ""
+class ResumeBasics(BaseModel):
+    name: str = ""
     email: str = ""
     phone: str = ""
     location: str = ""
+    summary: str = ""
+    photo_url: str = ""
     linkedin: str = ""
     github: str = ""
     website: str = ""
-    photo_url: str = ""
 
-class ExperienceItem(BaseModel):
-    title: str = ""
+class ResumeWork(BaseModel):
     company: str = ""
+    position: str = ""
     duration: str = ""
-    bullets: List[str] = []
+    highlights: List[str] = []
 
-class EducationItem(BaseModel):
-    degree: str = ""
+class ResumeEducation(BaseModel):
     institution: str = ""
-    year: str = ""
-    grade: str = ""
+    studyType: str = ""
+    duration: str = ""
 
-class ProjectItem(BaseModel):
+class ResumeProject(BaseModel):
     name: str = ""
     description: str = ""
-    tech_stack: str = ""
-    link: str = ""
+    url: str = ""
 
-class CertificationItem(BaseModel):
+class ResumeCertification(BaseModel):
     name: str = ""
     issuer: str = ""
-    year: str = ""
+
+class JsonResumeModel(BaseModel):
+    basics: ResumeBasics = ResumeBasics()
+    work: List[ResumeWork] = []
+    education: List[ResumeEducation] = []
+    skills: List[str] = []
+    projects: List[ResumeProject] = []
+    certifications: List[ResumeCertification] = []
 
 class DraftPayload(BaseModel):
     user_id: str
     template_id: str = "simple_professional"
-    personal_info: PersonalInfo = PersonalInfo()
-    summary: str = ""
-    experience: List[ExperienceItem] = []
-    education: List[EducationItem] = []
-    skills: List[str] = []
-    projects: List[ProjectItem] = []
-    certifications: List[CertificationItem] = []
-    section_order: List[str] = [
-        "summary", "experience", "education", "skills", "projects", "certifications"
-    ]
+    json_resume: JsonResumeModel = JsonResumeModel()
 
 class EnhanceRequest(BaseModel):
     user_id: str
     is_pro: bool = False
     job_title: str = ""
-    summary: str = ""
-    experience: List[ExperienceItem] = []
+    basics: ResumeBasics = ResumeBasics()
+    work: List[ResumeWork] = []
     skills: List[str] = []
 
 class GeneratePDFRequest(BaseModel):
     user_id: str
     is_pro: bool = False
     template_id: str = "simple_professional"
-    personal_info: PersonalInfo = PersonalInfo()
-    summary: str = ""
-    experience: List[ExperienceItem] = []
-    education: List[EducationItem] = []
-    skills: List[str] = []
-    projects: List[ProjectItem] = []
-    certifications: List[CertificationItem] = []
-    section_order: List[str] = [
-        "summary", "experience", "education", "skills", "projects", "certifications"
-    ]
+    json_resume: JsonResumeModel = JsonResumeModel()
+    accent_color: Optional[str] = None
+    font_family: Optional[str] = None
 
 class SwitchTemplateRequest(BaseModel):
     user_id: str
@@ -148,91 +138,15 @@ def _increment_download_limit(user_id: str, is_pro: bool):
 # ══════════════════════════════════════════════════════════════════════
 @router.get("/resume-builder/templates")
 def get_templates():
-    templates = [
-        # ── FREE ──────────────────────────────────────────────────────
-        {
-            "id": "simple_professional",
-            "name": "Simple Professional",
-            "description": "Clean, single-column layout. Perfect for corporate jobs.",
-            "is_pro": False,
-            "has_photo": False,
-            "accent_color": "#4F46E5",
-            "preview_emoji": "📄",
-            "category": "Classic"
-        },
-        {
-            "id": "basic_classic",
-            "name": "Basic Classic",
-            "description": "Traditional two-tone header. ATS-friendly and timeless.",
-            "is_pro": False,
-            "has_photo": False,
-            "accent_color": "#0891B2",
-            "preview_emoji": "📋",
-            "category": "Classic"
-        },
-        {
-            "id": "compact_fresher",
-            "name": "Compact Fresher",
-            "description": "One-page layout ideal for students and fresh graduates.",
-            "is_pro": False,
-            "has_photo": False,
-            "accent_color": "#059669",
-            "preview_emoji": "🎓",
-            "category": "Fresher"
-        },
-
-        # ── PRO ───────────────────────────────────────────────────────
-        {
-            "id": "modern_creative",
-            "name": "Modern Creative",
-            "description": "Two-column with circular photo. Vibrant purple accent.",
-            "is_pro": True,
-            "has_photo": True,
-            "accent_color": "#818CF8",
-            "preview_emoji": "✨",
-            "category": "Creative"
-        },
-        {
-            "id": "executive",
-            "name": "Executive Premium",
-            "description": "Bold header bar. Designed for senior professionals.",
-            "is_pro": True,
-            "has_photo": True,
-            "accent_color": "#1E3A5F",
-            "preview_emoji": "💼",
-            "category": "Executive"
-        },
-        {
-            "id": "tech_developer",
-            "name": "Tech Developer",
-            "description": "Dark sidebar, skill bars, GitHub links. Perfect for engineers.",
-            "is_pro": True,
-            "has_photo": False,
-            "accent_color": "#10B981",
-            "preview_emoji": "💻",
-            "category": "Tech"
-        },
-        {
-            "id": "designer_portfolio",
-            "name": "Designer Portfolio",
-            "description": "Large photo header, creative layout for designers.",
-            "is_pro": True,
-            "has_photo": True,
-            "accent_color": "#F472B6",
-            "preview_emoji": "🎨",
-            "category": "Creative"
-        },
-        {
-            "id": "corporate_premium",
-            "name": "Corporate Premium",
-            "description": "Two-column with navy sidebar. For finance & consulting.",
-            "is_pro": True,
-            "has_photo": True,
-            "accent_color": "#1E3A5F",
-            "preview_emoji": "🏢",
-            "category": "Executive"
-        },
-    ]
+    reg_path = os.path.join(os.path.dirname(__file__), "..", "templates_registry.json")
+    if os.path.exists(reg_path):
+        try:
+            with open(reg_path, "r") as f:
+                templates = json.load(f)
+        except Exception:
+            templates = []
+    else:
+        templates = []
     return {"templates": templates, "total": len(templates)}
 
 
@@ -280,9 +194,18 @@ def switch_template(req: SwitchTemplateRequest):
 @router.post("/resume-builder/enhance")
 async def enhance_content(req: EnhanceRequest):
     try:
+        experience_mapped = []
+        for e in req.work:
+            experience_mapped.append({
+                "title": e.position,
+                "company": e.company,
+                "duration": e.duration,
+                "bullets": e.highlights,
+            })
+
         initial_state = {
-            "summary": req.summary,
-            "experience": [e.dict() for e in req.experience],
+            "summary": req.basics.summary,
+            "experience": experience_mapped,
             "skills": req.skills,
             "is_pro": req.is_pro,
             "job_title": req.job_title or "Software Engineer",
@@ -294,11 +217,20 @@ async def enhance_content(req: EnhanceRequest):
 
         result = resume_builder_agent.invoke(initial_state)
 
+        enhanced_work = []
+        for e in result.get("enhanced_experience", experience_mapped):
+            enhanced_work.append({
+                "company": e.get("company", ""),
+                "position": e.get("title", ""),
+                "duration": e.get("duration", ""),
+                "highlights": e.get("bullets", []),
+            })
+
         return {
             "success": True,
-            "enhanced_summary":    result.get("enhanced_summary", req.summary),
-            "enhanced_experience": result.get("enhanced_experience", [e.dict() for e in req.experience]),
-            "suggested_skills":    result.get("suggested_skills", []),   # [] for free users
+            "enhanced_summary":    result.get("enhanced_summary", req.basics.summary),
+            "enhanced_experience": enhanced_work,
+            "suggested_skills":    result.get("suggested_skills", []),
             "is_pro":              req.is_pro,
             "error":               result.get("error"),
         }
@@ -367,7 +299,6 @@ async def upload_photo(
 # ══════════════════════════════════════════════════════════════════════
 @router.post("/resume-builder/generate-pdf")
 async def generate_pdf(req: GeneratePDFRequest):
-    # Access control
     _require_pro_for_template(req.template_id, req.is_pro)
     _check_download_limit(req.user_id, req.is_pro)
 
@@ -375,28 +306,119 @@ async def generate_pdf(req: GeneratePDFRequest):
         from jinja2 import Environment, FileSystemLoader
         import weasyprint
 
+        base_id = req.template_id
+        accent_color = req.accent_color
+        font_style = req.font_family # e.g. "Modern Sans", "Elegant Serif", "Clean Code", "Classic Serif", "Sleek Outfit"
+        
+        font_map = {
+            "Modern Sans": "'Inter', sans-serif",
+            "Elegant Serif": "'Playfair Display', Georgia, serif",
+            "Clean Code": "'Roboto Mono', monospace",
+            "Classic Serif": "'Lora', serif",
+            "Sleek Outfit": "'Outfit', sans-serif"
+        }
+        font_family = font_map.get(font_style) if font_style else None
+
+        if not accent_color:
+            reg_path = os.path.join(os.path.dirname(__file__), "..", "templates_registry.json")
+            if os.path.exists(reg_path):
+                try:
+                    with open(reg_path, "r") as f:
+                        regs = json.load(f)
+                        for r in regs:
+                            if r["id"] == base_id:
+                                accent_color = r.get("accent_color", "#4F46E5")
+                                break
+                except Exception:
+                    pass
+        if not accent_color:
+            accent_color = "#4F46E5"
+
         template_dir = os.path.join(os.path.dirname(__file__), "..", "templates", "resume")
         env = Environment(loader=FileSystemLoader(template_dir))
 
-        template_file = f"{req.template_id}.html"
+        template_file = f"{base_id}.html"
         try:
             template = env.get_template(template_file)
         except Exception:
-            # Fallback to simple_professional if template file missing
             template = env.get_template("simple_professional.html")
 
+        # Map standard JSON Resume fields to existing Jinja template variables
+        personal_info = {
+            "full_name": req.json_resume.basics.name,
+            "email": req.json_resume.basics.email,
+            "phone": req.json_resume.basics.phone,
+            "location": req.json_resume.basics.location,
+            "linkedin": req.json_resume.basics.linkedin,
+            "github": req.json_resume.basics.github,
+            "website": req.json_resume.basics.website,
+            "photo_url": req.json_resume.basics.photo_url,
+        }
+        
+        experience = []
+        for w in req.json_resume.work:
+            experience.append({
+                "title": w.position,
+                "company": w.company,
+                "duration": w.duration,
+                "bullets": w.highlights
+            })
+            
+        education = []
+        for e in req.json_resume.education:
+            education.append({
+                "degree": e.studyType,
+                "institution": e.institution,
+                "year": e.duration,
+                "grade": ""
+            })
+            
+        projects = []
+        for p in req.json_resume.projects:
+            projects.append({
+                "name": p.name,
+                "description": p.description,
+                "tech_stack": "",
+                "link": p.url
+            })
+            
+        certifications = []
+        for c in req.json_resume.certifications:
+            certifications.append({
+                "name": c.name,
+                "issuer": c.issuer,
+                "year": ""
+            })
+
         html_content = template.render(
-            personal_info = req.personal_info.dict(),
-            summary       = req.summary,
-            experience    = [e.dict() for e in req.experience],
-            education     = [e.dict() for e in req.education],
-            skills        = req.skills,
-            projects      = [p.dict() for p in req.projects],
-            certifications= [c.dict() for c in req.certifications],
-            section_order = req.section_order,
+            personal_info = personal_info,
+            summary       = req.json_resume.basics.summary,
+            experience    = experience,
+            education     = education,
+            skills        = req.json_resume.skills,
+            projects      = projects,
+            certifications= certifications,
+            section_order = ["summary", "experience", "education", "skills", "projects", "certifications"],
         )
 
-        # Write to temp file
+        # Inject dynamic overrides for color and fonts
+        override_style = f"<style>\n"
+        if accent_color:
+            override_style += f"""
+            .sidebar, .header-bar, .header {{ border-color: {accent_color} !important; }}
+            .sidebar, .header-bar {{ background: {accent_color} !important; }}
+            .section-title, .exp-company, .proj-link, .contact-row a, .contact a, .proj-title a, .proj-title {{ color: {accent_color} !important; }}
+            .section-title {{ border-bottom-color: {accent_color} !important; border-left-color: {accent_color} !important; }}
+            .skill-pill, .skill-tag, .skill-item {{ background: {accent_color}22 !important; color: {accent_color} !important; border-color: {accent_color} !important; }}
+            """
+        if font_family:
+            override_style += f"""
+            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Lora:wght@400;700&family=Outfit:wght@400;700&display=swap');
+            body, p, span, div, h1, h2, h3, li, a {{ font-family: {font_family}, 'Inter', sans-serif !important; }}
+            """
+        override_style += "</style>"
+        html_content = html_content.replace("</head>", f"{override_style}\n</head>")
+
         tmp_dir  = tempfile.mkdtemp()
         pdf_path = os.path.join(tmp_dir, f"resume_{req.user_id[:8]}.pdf")
 
@@ -404,17 +426,15 @@ async def generate_pdf(req: GeneratePDFRequest):
         with open(pdf_path, "wb") as f:
             f.write(pdf)
 
-        # Increment count only after the PDF is successfully generated and written
         _increment_download_limit(req.user_id, req.is_pro)
 
         return FileResponse(
             path        = pdf_path,
             media_type  = "application/pdf",
-            filename    = f"{req.personal_info.full_name.replace(' ', '_') or 'Resume'}.pdf",
+            filename    = f"{req.json_resume.basics.name.replace(' ', '_') or 'Resume'}.pdf",
         )
 
     except ImportError:
-        # WeasyPrint not installed — return HTML as fallback
         raise HTTPException(
             status_code=503,
             detail="PDF generation not available on this server. Please install weasyprint."

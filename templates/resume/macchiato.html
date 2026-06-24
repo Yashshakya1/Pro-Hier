@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ personal_info.full_name }} — Resume</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Outfit', sans-serif; background:#FCFAF7; color:#4E3629; font-size:10pt; line-height:1.45; }
+  .page { width:210mm; min-height:297mm; margin:0 auto; padding:15mm 15mm; }
+  
+  .header { border-bottom: 2px solid #D2B48C; padding-bottom: 12px; margin-bottom: 18px; }
+  .header h1 { font-family: 'Lora', serif; font-size: 24pt; font-weight: 700; color: #4E3629; }
+  .contact { font-size: 8.5pt; color: #8A6D5E; display: flex; gap: 15px; margin-top: 4px; }
+  .contact a { color: #8C6239; text-decoration: none; }
+  
+  .section { margin-bottom: 18px; }
+  .section-title { font-family: 'Lora', serif; font-size: 11pt; font-weight: 700; color: #8C6239; border-bottom: 1px solid #E6D7CB; padding-bottom: 2px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  
+  .summary { color: #5D4037; font-size: 9pt; }
+  
+  .exp-item { margin-bottom: 10px; }
+  .exp-title-row { display: flex; justify-content: space-between; font-weight: 600; color: #4E3629; }
+  .exp-company { color: #8C6239; font-family: 'Lora', serif; font-style: italic; }
+  .exp-dates { color: #8A6D5E; font-size: 8.5pt; font-weight: normal; }
+  .exp-bullets { margin-top: 3px; padding-left: 14px; }
+  .exp-bullets li { color: #5D4037; font-size: 8.5pt; margin-bottom: 2px; }
+  
+  .edu-item { margin-bottom: 8px; }
+  .edu-row { display: flex; justify-content: space-between; font-weight: 600; }
+  .edu-year { color: #8A6D5E; font-size: 8.5pt; font-weight: normal; }
+  
+  .skills-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .skill-item { background: #E6D7CB; color: #4E3629; padding: 2px 8px; border-radius: 4px; font-size: 8.5pt; }
+  
+  .proj-item { margin-bottom: 8px; }
+  .proj-title { font-weight: 600; }
+  .proj-desc { font-size: 8.5pt; color: #5D4037; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>{{ personal_info.full_name or 'Your Name' }}</h1>
+    <div class="contact">
+      {% if personal_info.email %}<span>{{ personal_info.email }}</span>{% endif %}
+      {% if personal_info.phone %}<span>| {{ personal_info.phone }}</span>{% endif %}
+      {% if personal_info.location %}<span>| {{ personal_info.location }}</span>{% endif %}
+      {% if personal_info.linkedin %}<span>| <a href="{{ personal_info.linkedin }}">LinkedIn</a></span>{% endif %}
+    </div>
+  </div>
+
+  {% for section in section_order %}
+    {% if section == 'summary' and summary %}
+    <div class="section">
+      <div class="section-title">Summary</div>
+      <p class="summary">{{ summary }}</p>
+    </div>
+    {% endif %}
+
+    {% if section == 'experience' and experience %}
+    <div class="section">
+      <div class="section-title">Experience</div>
+      {% for exp in experience %}
+      <div class="exp-item">
+        <div class="exp-title-row">
+          <div>{{ exp.title }} <span class="exp-company">at {{ exp.company }}</span></div>
+          <div class="exp-dates">{{ exp.duration }}</div>
+        </div>
+        {% if exp.bullets %}<ul class="exp-bullets">{% for b in exp.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if section == 'education' and education %}
+    <div class="section">
+      <div class="section-title">Education</div>
+      {% for edu in education %}
+      <div class="edu-item">
+        <div class="edu-row">
+          <div>{{ edu.degree }} <span class="edu-institution">, {{ edu.institution }}</span></div>
+          <div class="edu-year">{{ edu.year }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if section == 'skills' and skills %}
+    <div class="section">
+      <div class="section-title">Skills</div>
+      <div class="skills-list">{% for s in skills %}<span class="skill-item">{{ s }}</span>{% endfor %}</div>
+    </div>
+    {% endif %}
+
+    {% if section == 'projects' and projects %}
+    <div class="section">
+      <div class="section-title">Projects</div>
+      {% for proj in projects %}
+      <div class="proj-item">
+        <div class="proj-title">{{ proj.name }} {% if proj.link %}| <a href="{{ proj.link }}">Link</a>{% endif %}</div>
+        <div class="proj-desc">{{ proj.description }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+</body>
+</html>

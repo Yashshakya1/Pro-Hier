@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ personal_info.full_name }} — Resume</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Fira Code', monospace; background:#fff; color:#333; font-size:9.5pt; line-height:1.4; }
+  .page { width:210mm; min-height:297mm; margin:0 auto; padding:15mm 15mm; }
+  
+  .header { border-bottom: 2px dashed #999; padding-bottom: 12px; margin-bottom: 16px; }
+  .header h1 { font-size: 20pt; font-weight: 700; color: #111; }
+  .contact { font-size: 8.5pt; color: #666; margin-top: 4px; }
+  .contact a { color: #0066cc; text-decoration: none; }
+  
+  .section { margin-bottom: 16px; }
+  .section-title { font-size: 10pt; font-weight: 700; color: #111; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px dashed #ccc; padding-bottom: 2px; }
+  
+  .summary { color: #444; font-size: 8.5pt; }
+  
+  .exp-item { margin-bottom: 10px; }
+  .exp-header { display: flex; justify-content: space-between; font-weight: 600; }
+  .exp-company { color: #0066cc; }
+  .exp-dates { color: #888; font-size: 8.5pt; font-weight: normal; }
+  .exp-bullets { margin-top: 3px; padding-left: 14px; }
+  .exp-bullets li { color: #444; font-size: 8.5pt; margin-bottom: 2px; }
+  
+  .edu-item { margin-bottom: 8px; }
+  .edu-row { display: flex; justify-content: space-between; font-weight: 600; }
+  .edu-year { color: #888; font-size: 8.5pt; font-weight: normal; }
+  
+  .skills-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .skill-item { background: #f0f0f0; color: #111; padding: 1px 6px; border: 1px solid #ccc; font-size: 8pt; }
+  
+  .proj-item { margin-bottom: 8px; }
+  .proj-title { font-weight: 600; }
+  .proj-desc { font-size: 8.5pt; color: #444; margin-top: 1px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>{{ personal_info.full_name or 'Your Name' }}</h1>
+    <div class="contact">
+      {% if personal_info.email %}<span>[ {{ personal_info.email }} ]</span>{% endif %}
+      {% if personal_info.phone %}<span>[ {{ personal_info.phone }} ]</span>{% endif %}
+      {% if personal_info.location %}<span>[ {{ personal_info.location }} ]</span>{% endif %}
+      {% if personal_info.linkedin %}<span>[ <a href="{{ personal_info.linkedin }}">LinkedIn</a> ]</span>{% endif %}
+    </div>
+  </div>
+
+  {% for section in section_order %}
+    {% if section == 'summary' and summary %}
+    <div class="section">
+      <div class="section-title"># summary</div>
+      <p class="summary">{{ summary }}</p>
+    </div>
+    {% endif %}
+
+    {% if section == 'experience' and experience %}
+    <div class="section">
+      <div class="section-title"># experience</div>
+      {% for exp in experience %}
+      <div class="exp-item">
+        <div class="exp-header">
+          <div>{{ exp.title }} <span class="exp-company">@ {{ exp.company }}</span></div>
+          <div class="exp-dates">{{ exp.duration }}</div>
+        </div>
+        {% if exp.bullets %}<ul class="exp-bullets">{% for b in exp.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if section == 'education' and education %}
+    <div class="section">
+      <div class="section-title"># education</div>
+      {% for edu in education %}
+      <div class="edu-item">
+        <div class="edu-row">
+          <div>{{ edu.degree }} <span class="edu-institution">, {{ edu.institution }}</span></div>
+          <div class="edu-year">{{ edu.year }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if section == 'skills' and skills %}
+    <div class="section">
+      <div class="section-title"># skills</div>
+      <div class="skills-list">{% for s in skills %}<span class="skill-item">{{ s }}</span>{% endfor %}</div>
+    </div>
+    {% endif %}
+
+    {% if section == 'projects' and projects %}
+    <div class="section">
+      <div class="section-title"># projects</div>
+      {% for proj in projects %}
+      <div class="proj-item">
+        <div class="proj-title">{{ proj.name }} {% if proj.link %}| <a href="{{ proj.link }}">link</a>{% endif %}</div>
+        <div class="proj-desc">{{ proj.description }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+</body>
+</html>
